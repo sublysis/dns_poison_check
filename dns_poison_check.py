@@ -78,14 +78,10 @@ except ImportError:
 # DNSSEC validation check
 # --------------------------------------------------------------------------
 
-# Long-standing, deliberately-broken-signature domains maintained for
-# exactly this kind of test. A resolver that VALIDATES DNSSEC returns
-# SERVFAIL for these; a resolver that doesn't returns a normal answer.
+# Long-standing, deliberately-broken-signature domains maintained for exactly this kind of test. A resolver that VALIDATES DNSSEC returns SERVFAIL for these; a resolver that doesn't returns a normal answer.
 DNSSEC_BROKEN_TEST_DOMAINS = ["dnssec-failed.org", "sigfail.verteiltesysteme.net"]
 
-# A properly-signed domain, used to confirm the resolver at least passes
-# through RRSIG records / sets the DO bit when asked (necessary but not
-# sufficient for validation on its own).
+# A properly-signed domain, used to confirm the resolver at least passes through RRSIG records / sets the DO bit when asked (necessary but not sufficient for validation on its own).
 DNSSEC_GOOD_TEST_DOMAIN = "cloudflare.com"
 
 
@@ -180,7 +176,7 @@ def _generate_load(resolver_ip, base_domain, n_samples, per_query_timeout=2):
         try:
             r.resolve(qname, "A", raise_on_no_answer=False)
         except Exception:
-            pass  # expected: NXDOMAIN / timeout — we only care that it queried upstream
+            pass  # expected: NXDOMAIN / timeout. We only care that it queried upstream
 
 
 def capture_mode(resolver_ip, iface, test_domain, n_samples, timeout):
@@ -267,8 +263,7 @@ def authoritative_mode(resolver_ip, zone, listen_ip, listen_port, n_samples, tim
                 "src_ip": addr[0],
                 "ts": time.time(),
             })
-            # Deliberately no reply: we have no real zone data to serve, and we
-            # only need to see the query hit us once to record port + TXID.
+            # Deliberately no reply: we have no real zone data to serve, and we only need to see the query hit us once to record port + TXID.
             if len(captured) >= n_samples:
                 stop_event.set()
 
@@ -306,8 +301,7 @@ def authoritative_mode(resolver_ip, zone, listen_ip, listen_port, n_samples, tim
 # --------------------------------------------------------------------------
 
 def shannon_entropy_ratio(values, lo, hi, n_buckets=64):
-    """0 = all samples land in one bucket (no spread), 1 = perfectly
-    uniform across the bucketed range."""
+    """0 = all samples land in one bucket (no spread), 1 = perfectly uniform across the bucketed range."""
     if not values:
         return 0.0
     width = max((hi - lo + 1) / n_buckets, 1)
@@ -327,11 +321,7 @@ def shannon_entropy_ratio(values, lo, hi, n_buckets=64):
 
 
 def sequential_ratio(values_in_arrival_order, max_step=4):
-    """Fraction of consecutive samples (in the order they were observed)
-    that differ by a small constant step. Catches simple counters, which
-    can still look 'spread out' by pure entropy once they wrap around,
-    but are trivially predictable one-step-ahead — the property that
-    actually matters for an attacker racing the next guess."""
+    """Fraction of consecutive samples (in the order they were observed) that differ by a small constant step. Catches simple counters, which can still look 'spread out' by pure entropy once they wrap around, but are trivially predictable one-step-ahead — the property that actually matters for an attacker racing the next guess."""
     vals = values_in_arrival_order
     if len(vals) < 2:
         return 0.0
@@ -346,11 +336,7 @@ def duplicate_ratio(values):
 
 
 def score_randomness(values_in_order, lo, hi, label):
-    """Returns (risk_points 0-4 or None, summary dict) for one signal
-    (port or txid). None means "not measured" — either the mode never
-    attempted collection, or collection ran but captured nothing (a
-    methodology/setup problem, not evidence about the resolver) — and
-    must NOT be silently treated as a worst-case finding."""
+    """Returns (risk_points 0-4 or None, summary dict) for one signal (port or txid). None means "not measured", either the mode never attempted collection, or collection ran but captured nothing (a methodology/setup problem, not evidence about the resolver), and must NOT be silently treated as a worst-case finding."""
     n = len(values_in_order)
     if n == 0:
         return None, {"samples": 0, "note": f"no {label} samples captured — not measured"}
@@ -396,12 +382,7 @@ def verdict_for(total):
 
 
 def combine_scores(port_score, txid_score, dnssec_score):
-    """Only combine components that were actually measured. Port and TXID
-    entropy are independent of DNSSEC status (most zones still aren't
-    signed, so a resolver's port/TXID behavior matters regardless of its
-    DNSSEC posture) — extrapolating a full 0-10 score from DNSSEC alone
-    would not be a defensible risk figure, so we refuse to fabricate one.
-    Returns (total_or_None, list_of_measured_component_names)."""
+    """Only combine components that were actually measured. Port and TXID entropy are independent of DNSSEC status (most zones still aren't signed, so a resolver's port/TXID behavior matters regardless of its DNSSEC posture), extrapolating a full 0-10 score from DNSSEC alone would not be a defensible risk figure, so we refuse to fabricate one. Returns (total_or_None, list_of_measured_component_names)."""
     measured = []
     total = 0.0
     if port_score is not None:
