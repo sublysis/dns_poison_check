@@ -403,16 +403,28 @@ def print_report(resolver_ip, mode, port_score, port_summary, txid_score, txid_s
                   dnssec_score, dnssec_result, dnssec_note):
     total, measured = combine_scores(port_score, txid_score, dnssec_score)
 
-    print("=" * 66)
-    print(f" DNS cache-poisoning risk assessment — {resolver_ip}")
-    print("=" * 66)
+    print("\033[0;96;46m▀\033[0;36m█▀█\033[0;37m \033[0;96;46m▀\033[0;36m█▀█\033[0;37m \033[0;96;46m▀\033[0;36m█▀▀\033[0;37m      \033[0;96;46m▀\033[0;36m█▀\033[0;37m \033[0;96;46m▀\033[0;36m█▀█\033[0;37m \033[0;96;46m▀\033[0;36m█▀\033[0;37m \033[0;96;46m▀\033[0;36m█\033[0;37m \033[0;36m█\033[0;37m \033[0;96;46m▀\033[0;36m█▀\033[0;37m     \033[0;96;46m▀\033[0;36m█▀█\033[0;37m \033[0;96;46m▀\033[0;36m█▀▄\033[0;37m \033[0;96;46m▀\033[0;36m█\033[0;37m \033[0;96;46m▀\033[0;36m█▀▀\033[0;37m \033[0;96;46m▀\033[0;36m█▀▄\033[0;37m \033[0;96;46m▀\033[0;36m█▀█\033[0;37m \033[0;96;46m▀\033[0;36m█\033[0;37m \033[0;96;46m▀\033[0;36m█▀█\033[0;37m \033[0;96;46m▀\033[0;36m█▀▀\033[0m")
+    print("\033[0;36m██\033[0;37m \033[0;36m█\033[0;37m \033[0;36m██\033[0;37m \033[0;36m█\033[0;37m  \033[0;36m▀▀█\033[0;37m      \033[0;36m██\033[0;37m  \033[0;36m██▄█\033[0;37m \033[0;36m██\033[0;37m  \033[0;36m██▀█\033[0;37m \033[0;36m██▀\033[0;37m \033[0;96m▄\033[0;36m▄▄\033[0;37m \033[0;36m██▄▀\033[0;37m \033[0;36m██\033[0;37m \033[0;36m█\033[0;37m \033[0;36m██\033[0;37m  \033[0;36m▀▀█\033[0;37m \033[0;36m██\033[0;37m \033[0;36m█\033[0;37m \033[0;36m██\033[0;37m \033[0;36m█\033[0;37m \033[0;36m██\033[0;37m \033[0;36m██\033[0;37m \033[0;36m█\033[0;37m \033[0;36m██\033[0;37m \033[0;36m▄\033[0m")
+    print("\033[0;36m██▄▀\033[0;37m \033[0;36m██\033[0;37m \033[0;36m█\033[0;37m \033[0;36m██▄█\033[0;37m      \033[0;36m██▄\033[0;37m \033[0;36m██\033[0;37m \033[0;36m█\033[0;37m \033[0;36m██▄\033[0;37m \033[0;36m██\033[0;37m \033[0;36m█\033[0;37m \033[0;36m██▄\033[0;37m \033[0;36m▀▀▀\033[0;37m \033[0;36m██\033[0;37m   \033[0;36m▀█▄▀\033[0;37m \033[0;36m██\033[0;37m \033[0;36m██▄█\033[0;37m \033[0;36m▀█▄▀\033[0;37m \033[0;36m██\033[0;37m \033[0;36m█\033[0;37m \033[0;36m██\033[0;37m \033[0;36m██\033[0;37m \033[0;36m█\033[0;37m \033[0;36m▀█▄█\033[0m")
+
+
+    print("=" * 86)
+    print(f"DNS cache-poisoning risk assessment")
+    print(f"Author: Laurent Schueller")
+    print(f"License: MIT")
+    print(f"Last Version: 10/2026")
+    print(f"Repo: https://github.com/sublysis/dns_poison_check")
+    print("=" * 86)
+    print()
+    print(f" Target: {resolver_ip}")
+    print()
     print(f" Mode: {mode}")
     print()
     _print_component("Source port randomness", 4.0, port_score, port_summary)
     print()
     _print_component("Transaction ID randomness", 4.0, txid_score, txid_summary)
     print()
-    print(f" DNSSEC validation        : {dnssec_score:.2f} / 2.0 risk points — {dnssec_note}")
+    print(f" DNSSEC validation: {dnssec_score:.2f} / 2.0 risk points — {dnssec_note}")
     for d in dnssec_result["details"]:
         print(f"     - {d}")
     print()

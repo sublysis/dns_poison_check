@@ -1,6 +1,6 @@
 # DNS Poison Check
 
-> *Last updated: 10/2026 | Author: Laurent Schueller | For authorized penetration testing, lab / trainging, and network auditing use only.*
+> *Last updated: 10/2026 | Author: Laurent Schueller | For authorized penetration testing, lab / training, and network auditing use only.*
 
 A passive auditing / pentesting tool that estimates how susceptible a recursive DNS resolver is to cache-poisoning (Kaminsky-style) attacks. It measures three independent signals and combines them into a single **0–10 risk score** (0 = very safe, 10 = critical):
 
