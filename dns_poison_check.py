@@ -2,51 +2,34 @@
 """
 dns_poison_check.py — DNS cache-poisoning susceptibility auditor
 
-Measures three things about a RECURSIVE resolver and combines them into a
-single 0-10 risk score (0 = very safe, 10 = critical):
+Last updated: 10/2026
+Author: Laurent Schueller, https://sublysis.github.com
+License: MIT
+For authorized penetration testing and network auditing use only.
 
-  1. Source-port randomization  of the resolver's OUTBOUND upstream queries
-  2. Transaction-ID randomization of the same queries
-  3. DNSSEC validation behavior
+Measures three things about a RECURSIVE resolver and combines them into a single 0-10 risk score (0 = very safe, 10 = critical):
+
+1. Source-port randomization  of the resolver's OUTBOUND upstream queries
+2. Transaction-ID randomization of the same queries
+3. DNSSEC validation behavior
 
 WHY TWO DATA-COLLECTION MODES
 ------------------------------
-The port and TXID that matter for cache poisoning are the ones the
-resolver itself chooses when it queries *out* to authoritative servers —
-not anything visible in the answer it hands back to you. There is no way
-to observe that from a plain DNS client. You need a vantage point on the
-resolver's egress traffic. This script offers two:
+The port and TXID that matter for cache poisoning are the ones the resolver itself chooses when it queries *out* to authoritative servers, not anything visible in the answer it hands back to you. There is no way to observe that from a plain DNS client. You need a vantage point on the resolver's egress traffic. This script offers two:
 
-  --mode capture         Sniff the resolver's own egress live with scapy.
-                          Run this ON or NEAR the resolver (same host, or
-                          a mirrored/SPAN port) with root / CAP_NET_RAW.
-                          Use for a resolver YOU administer.
-                          Needs: pip install scapy
+  --mode capture         Sniff the resolver's own egress live with scapy. Run this ON or NEAR the resolver (same host, or a mirrored/SPAN port) with root / CAP_NET_RAW.
+                          Use for a resolver YOU administer. Needs: pip install scapy
 
-  --mode authoritative    Stand up a minimal logging "nameserver" for a
-                          zone YOU control and have delegated (NS record)
-                          to this host, then fire unique-label queries at
-                          the target resolver so it has no choice but to
-                          walk out and query YOU — logging exactly which
-                          port/TXID it used. This is the same technique
-                          DNS-OARC's and GRC's public testers use, and is
-                          the practical option for a third-party/remote
-                          resolver you have no network visibility into.
-                          Needs: a domain, an NS delegation to this host,
-                          and (usually) root to bind port 53.
+  --mode authoritative    Stand up a minimal logging "nameserver" for a zone YOU control and have delegated (NS record) to this host, then fire unique-label queries at
+                          the target resolver so it has no choice but to walk out and query YOU, logging exactly which port/TXID it used. This is the same technique
+                          DNS-OARC's and GRC's public testers use, and is the practical option for a third-party/remote resolver you have no network visibility into.
+                          Needs: a domain, an NS delegation to this host, and (usually) root to bind port 53.
 
-  --mode dnssec-only      Skip port/TXID measurement entirely (default).
-                          Useful when neither vantage point above is
-                          available; you still get the DNSSEC sub-score.
+  --mode dnssec-only      Skip port/TXID measurement entirely (default). Useful when neither vantage point above is available; you still get the DNSSEC sub-score.
 
 SCOPE / ETHICS
 ---------------
-This tool is PASSIVE MEASUREMENT ONLY. It sends ordinary DNS queries and
-observes real traffic; it never forges or injects spoofed DNS responses
-and cannot poison anything by itself. Only point it at resolvers you own
-or are explicitly authorized to test — third-party resolvers should be
-tested via the public services (DNS-OARC's Check My DNS, GRC's DNS
-Spoofability Test) instead of scripted probing.
+This tool is PASSIVE MEASUREMENT ONLY. It sends ordinary DNS queries and observes real traffic; it never forges or injects spoofed DNS responses and cannot poison anything by itself. Only point it at resolvers you own or are explicitly authorized to test, third-party resolvers should be tested via the public services (DNS-OARC's Check My DNS, GRC's DNS Spoofability Test) instead of scripted probing.
 
 Requirements: dnspython (always). scapy only if --mode capture.
     pip install dnspython scapy
@@ -104,13 +87,13 @@ def check_dnssec(resolver_ip, timeout=5):
             r.resolve(domain, "A")
             broken_outcome = "resolved"
             result["details"].append(
-                f"{domain}: resolved normally (resolver did NOT reject the bad signature)"
+                f"{domain}: resolved normally (Resolver did NOT reject the bad signature)"
             )
             break
         except dns.resolver.NoNameservers:
             broken_outcome = "servfail"
             result["details"].append(
-                f"{domain}: SERVFAIL (resolver rejected the bad signature — validating)"
+                f"{domain}: SERVFAIL (Resolver rejected the bad signature. Validating.)"
             )
             break
         except dns.resolver.NXDOMAIN:
@@ -155,7 +138,7 @@ def score_dnssec(dnssec_result):
         if dnssec_result["do_bit_supported"]:
             return 1.0, "DO bit / RRSIG pass-through works, but resolver does not validate signatures"
         return 2.0, "No DNSSEC validation and no sign of DO-bit support"
-    return 1.0, "DNSSEC status inconclusive (test domains unreachable) — scored as partial risk"
+    return 1.0, "DNSSEC status inconclusive (test domains unreachable): scored as partial risk"
 
 
 # --------------------------------------------------------------------------
@@ -435,7 +418,7 @@ def print_report(resolver_ip, mode, port_score, port_summary, txid_score, txid_s
     print()
     print("-" * 66)
     if total is None:
-        print(" TOTAL RISK SCORE: not computed — port and/or TXID randomness was not")
+        print(" TOTAL RISK SCORE: not computed. Port and/or TXID randomness was not")
         print(" measured, and DNSSEC status alone is not a defensible stand-in for it")
         print(" (most zones aren't signed, so port/TXID entropy matters regardless).")
         print(" Re-run with --mode capture or --mode authoritative for a full 0-10 score.")
@@ -453,7 +436,7 @@ def print_report(resolver_ip, mode, port_score, port_summary, txid_score, txid_s
 def main():
     parser = argparse.ArgumentParser(
         description="DNS cache-poisoning susceptibility auditor "
-                     "(source-port + TXID randomness, DNSSEC) — passive measurement only.",
+                     "(source-port + TXID randomness, DNSSEC). Passive measurement only.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -475,7 +458,7 @@ def main():
     args = parser.parse_args()
 
     print(
-        "NOTE: passive measurement only — no spoofed packets are sent. "
+        "NOTE: passive measurement only. No spoofed packets are sent. "
         "Only test resolvers you own or are authorized to test.\n",
         file=sys.stderr,
     )
